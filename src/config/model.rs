@@ -1,3 +1,4 @@
+use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -9,7 +10,7 @@ pub struct Config {
     pub devices: HashMap<String, Device>,
 
     #[serde(default)]
-    pub groups: HashMap<String, Vec<String>>,
+    pub groups: IndexMap<String, IndexSet<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,7 +19,7 @@ pub struct NetworkConfig {
     pub command_port: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Device {
     pub alias: Option<String>,
     pub id: String,
@@ -34,7 +35,7 @@ impl Default for Config {
                 command_port: 5600,
             },
             devices: HashMap::new(),
-            groups: HashMap::new(),
+            groups: IndexMap::new(),
         }
     }
 }

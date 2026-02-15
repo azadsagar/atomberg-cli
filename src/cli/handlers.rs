@@ -36,7 +36,7 @@ pub async fn run(cli: Cli) -> Result<()> {
                                 alias: Some(b.device_id.clone()),
                                 id: b.device_id.clone(),
                                 ip: b.ip.to_string(), 
-                                groups: [].to_vec(),
+                                groups: Vec::new(),
                             });
                         }
                     }
