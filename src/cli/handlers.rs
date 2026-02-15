@@ -23,7 +23,8 @@ pub async fn run(cli: Cli) -> Result<()> {
 
             println!("Discovering devices on network...");
 
-            let mut devices:  HashMap<String, Device> = config.devices;
+            let mut devices: HashMap<String, Device> = config.devices.clone();
+            let mut changed: bool = false;
 
             loop {
                 tokio::select! {
@@ -31,23 +32,41 @@ pub async fn run(cli: Cli) -> Result<()> {
                     Some(payload) = rx.recv() => {
                         if let protocol::Payload::Becon(b) = payload {
                             //println!("Found device: {:?}", b);
-                            devices.entry(b.device_id.clone())
-                            .or_insert(Device{
-                                alias: Some(b.device_id.clone()),
-                                id: b.device_id.clone(),
-                                ip: b.ip.to_string(), 
-                                groups: Vec::new(),
-                            });
+                            let ip = b.ip.to_string();
+
+                            match devices.get_mut(&b.device_id) {
+
+                                Some(device) => {
+                                    if device.ip != ip {
+                                        device.ip = ip;
+                                        changed = true;
+                                    }
+                                }
+
+                                None => {
+                                    devices.insert(
+                                        b.device_id.clone(),
+                                        Device {
+                                            alias: Some(b.device_id.clone()),
+                                            id: b.device_id.clone(),
+                                            ip,
+                                            groups: Vec::new(),
+                                        }
+                                    );
+
+                                    changed = true;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            if args.save {
+            if args.save && changed {
                 config.devices = devices;
                 save::save(&config, &cli.config)?;
+                println!("Config updated !")
             }
-
         }
         Command::Alias(args) => println!("{:#?}", args),
         Command::Group(args) => println!("{:#?}", args),
