@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -29,18 +29,16 @@ pub struct Device {
     pub online: bool,
 }
 
-
-
 impl Default for Config {
     fn default() -> Self {
-        Self { 
-            network: NetworkConfig{
+        Self {
+            network: NetworkConfig {
                 becon_port: 5625,
                 command_port: 5600,
                 offline_after: 30,
-            } ,
-            devices: HashMap::new(), 
-            groups: HashMap::new(), 
+            },
+            devices: HashMap::new(),
+            groups: HashMap::new(),
         }
     }
 }

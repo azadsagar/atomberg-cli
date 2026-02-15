@@ -3,8 +3,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 
 pub fn default_config_path() -> Result<PathBuf> {
-    let home = dirs::home_dir()
-        .context("Could not determine home directory")?;
+    let home = dirs::home_dir().context("Could not determine home directory")?;
 
     Ok(home.join(".atomberg").join("config"))
 }

@@ -1,6 +1,6 @@
 use crate::protocol::becon::{BeconPayload, StatusPayload};
 
-pub mod  becon;
+pub mod becon;
 pub mod command;
 pub mod status;
 
