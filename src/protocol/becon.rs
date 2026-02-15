@@ -6,8 +6,19 @@ pub struct BeconPayload {
     pub ip: IpAddr,
 }
 
-#[derive(Debug, Clone)]
-pub struct StatusPayload {
-    pub device_id: String,
-    pub raw: Vec<u8>,
+pub fn parse(content: &str, src_ip: IpAddr) -> Option<BeconPayload> {
+    if content.len() < 12 {
+        return None;
+    }
+
+    let mac = &content[..12];
+
+    if !mac.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+
+    Some(BeconPayload {
+        device_id: mac.to_uppercase(),
+        ip: src_ip,
+    })
 }

@@ -1,29 +1,32 @@
+use anyhow::Result;
 use tokio::net::UdpSocket;
-use tokio::sync::oneshot;
+use tokio::sync::mpsc;
 
-pub async fn atomber_udp_listener(port: u16, mut shutdown: oneshot::Receiver<()>) {
+use crate::protocol;
+
+pub async fn atomber_udp_listener(port: u16) -> Result<mpsc::Receiver<protocol::Payload>> {
     let socket = UdpSocket::bind(("0.0.0.0", port))
         .await
         .expect("Failed to listen");
 
-    let mut buf = [0u8; 4096];
+    let (tx, rx) = mpsc::channel(100);
 
-    loop {
-        tokio::select! {
-            result = socket.recv_from(&mut buf) => {
-                match result {
-                    Ok((len, addr)) => {
-                        println!("Received payload of size {}, from {}", len, addr);
-                    }
-                    Err(_) => {
-                        break;
+    tokio::spawn(async move {
+        let mut buf = [0u8; 4096];
+
+        loop {
+            match socket.recv_from(&mut buf).await {
+                Ok((len, src)) => {
+                    if let Some(payload) = protocol::parse_payload(&buf[..len], src.ip()) {
+                        if tx.send(payload).await.is_err() {
+                            break;
+                        }
                     }
                 }
-            }
-
-            _ = &mut shutdown => {
-                break;
+                Err(_) => break,
             }
         }
-    }
+    });
+
+    Ok(rx)
 }

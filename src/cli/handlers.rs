@@ -1,27 +1,82 @@
+use std::collections::HashMap;
+
 use crate::cli::args::{Cli, Command};
 use crate::config::load::load;
+use crate::config::model::Device;
+use crate::config::save;
 use crate::network::udp_server::atomber_udp_listener;
+use crate::protocol;
 
 use anyhow::{Ok, Result};
-use tokio::{sync::oneshot, time::sleep};
+use tokio::time::{Duration, sleep};
 
 pub async fn run(cli: Cli) -> Result<()> {
-    let config = load(&cli.config)?;
+    let mut config = load(&cli.config)?;
 
     match cli.command {
         Command::Discover(args) => {
-            let (tx, rx) = oneshot::channel();
-            let handle = tokio::spawn(async move {
-                atomber_udp_listener(config.network.becon_port.clone(), rx).await;
-            });
-            sleep(std::time::Duration::from_secs(args.interval.clone())).await;
+            let mut rx = atomber_udp_listener(config.network.becon_port).await?;
 
-            let _ = tx.send(());
-            let _ = handle.await;
+            let timeout = sleep(Duration::from_secs(args.interval));
+
+            tokio::pin!(timeout);
+
+            println!("Discovering devices on network...");
+
+            let mut devices:  HashMap<String, Device> = config.devices;
+
+            loop {
+                tokio::select! {
+                    _ = &mut timeout => break,
+                    Some(payload) = rx.recv() => {
+                        if let protocol::Payload::Becon(b) = payload {
+                            //println!("Found device: {:?}", b);
+                            devices.entry(b.device_id.clone())
+                            .or_insert(Device{
+                                alias: Some(b.device_id.clone()),
+                                id: b.device_id.clone(),
+                                ip: b.ip.to_string(), 
+                                groups: [].to_vec(),
+                            });
+                        }
+                    }
+                }
+            }
+
+            if args.save {
+                config.devices = devices;
+                save::save(&config, &cli.config)?;
+            }
+
         }
         Command::Alias(args) => println!("{:#?}", args),
         Command::Group(args) => println!("{:#?}", args),
-        Command::Send(args) => println!("{:#?}", args),
+        Command::Send(args) => {
+            let mut rx = atomber_udp_listener(config.network.becon_port).await?;
+
+            // TODO: send command to smart fans
+            // send_command(..).await ?
+
+            println!("{:#?}", args);
+
+            let timeout = sleep(Duration::from_secs(3));
+            tokio::pin!(timeout);
+
+            loop {
+                tokio::select! {
+                    _ = &mut timeout => {
+                        println!("Timeout waiting for status");
+                        break;
+                    }
+                    Some(payload) = rx.recv() => {
+                        if let protocol::Payload::Status(s) = payload {
+                            println!("Status Received: {:?}",s);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // let debug_string = toml::to_string_pretty(&config)?;
