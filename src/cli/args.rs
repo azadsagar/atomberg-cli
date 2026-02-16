@@ -1,5 +1,5 @@
-use crate::utils::fan_speed::speed_parser;
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use crate::utils::fan_speed::{speed_parser, timer_parser};
+use clap::{ArgGroup, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -60,6 +60,20 @@ pub struct DiscoverArgs {
 }
 
 #[derive(Args, Debug)]
+#[command(
+    group(
+        ArgGroup::new("target")
+        .required(true)
+        .multiple(false)
+        .args(["alias", "group"])
+    ),
+    group(
+        ArgGroup::new("action")
+        .required(true)
+        .multiple(true)
+        .args(["speed","led","power","timer","sleep"])
+    )
+)]
 pub struct SendArgs {
     #[arg(long, help = "Friendly name of the device")]
     pub alias: Option<String>,
@@ -75,6 +89,12 @@ pub struct SendArgs {
 
     #[arg(long, help = "Should the power be on or off")]
     pub power: Option<PowerState>,
+
+    #[arg(long, help = "Auto reduce fan speed by 1 every 2 hours")]
+    pub sleep: Option<PowerState>,
+
+    #[arg(long, value_parser = timer_parser  ,help = "Set timer 0-Off, 1-1hr, 2-2hr, 3-3hr, 4-6hr")]
+    pub timer: Option<u8>,
 }
 
 #[derive(Args, Debug)]

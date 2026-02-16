@@ -23,6 +23,6 @@ pub fn parse_payload(buf: &[u8], src_ip: IpAddr) -> Option<Payload> {
     if content.len() <= 15 {
         becon::parse(content, src_ip).map(Payload::Becon)
     } else {
-        status::parse(content, src_ip).map(Payload::Status)
+        status::parse(content).map(Payload::Status)
     }
 }

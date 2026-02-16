@@ -8,6 +8,7 @@ mod config;
 mod network;
 mod protocol;
 mod utils;
+mod device;
 
 #[tokio::main]
 async fn main() {

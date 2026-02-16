@@ -1,6 +1,6 @@
 use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, net::IpAddr};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -23,7 +23,7 @@ pub struct NetworkConfig {
 pub struct Device {
     pub alias: Option<String>,
     pub id: String,
-    pub ip: String,
+    pub ip: IpAddr,
     pub groups: Vec<String>,
 }
 

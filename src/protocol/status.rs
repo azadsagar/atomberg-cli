@@ -1,26 +1,41 @@
-use std::net::IpAddr;
 
-#[derive(Debug, Clone)]
+use serde::Deserialize;
+
+use crate::device::DeviceState;
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct StatusPayload {
     pub device_id: String,
-    pub raw: String,
-    pub src_ip: IpAddr,
+    pub message_id: String,
+    pub state_string: String,
 }
 
-pub fn parse(content: &str, src_ip: IpAddr) -> Option<StatusPayload> {
+pub fn parse(content: &str) -> Option<StatusPayload> {
     if content.len() < 12 {
         return None;
     }
 
-    let mac = &content[..12];
+    let raw = hex::decode(content).ok()?;
 
-    if !mac.chars().all(|c| c.is_ascii_hexdigit()) {
-        return None;
+    let payload: StatusPayload = serde_json::from_slice(&raw).ok()?;
+
+    Some(payload)
+}
+
+pub fn decode_device_state(state: u32) -> DeviceState {
+    let power = (state & 0x10) > 0 ;
+    let led = (state & 0x20) > 0;
+    let sleep = (state &0x80) > 0;
+    let speed = (state & 0x07) as u8;
+    let timer = ((state & 0x0F0000) >>16) as u8;
+    let timer_elapsed_mins =((state & 0xFF000000)  >> 24) * 4;
+    
+    DeviceState { 
+        power,
+        led,
+        sleep,
+        speed, 
+        timer, 
+        timer_elapsed_mins 
     }
-
-    Some(StatusPayload {
-        device_id: mac.to_uppercase(),
-        raw: content.to_string(),
-        src_ip: src_ip,
-    })
 }

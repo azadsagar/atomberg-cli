@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-
-use crate::cli::args::{Cli, Command};
+use crate::cli::args::{Cli, Command, PowerState};
 use crate::config::load::load;
-use crate::config::model::Device;
 use crate::config::save;
+use crate::device::command::CommandOptions;
+use crate::device::discover::discover_devices;
+use crate::device::target::{Target, resolve_target};
 use crate::network::udp_server::atomber_udp_listener;
-use crate::protocol;
+use crate::{device, protocol};
 
 use anyhow::{Ok, Result};
 use tokio::time::{Duration, sleep};
@@ -15,68 +15,57 @@ pub async fn run(cli: Cli) -> Result<()> {
 
     match cli.command {
         Command::Discover(args) => {
-            let mut rx = atomber_udp_listener(config.network.becon_port).await?;
 
-            let timeout = sleep(Duration::from_secs(args.interval));
+            let mut rx = atomber_udp_listener(config.network.becon_port.clone()).await?;
+            
+            let device_results = discover_devices(
+                &mut rx, 
+                &config.devices, 
+                Duration::from_secs(args.interval)
+            ).await?;
 
-            tokio::pin!(timeout);
-
-            println!("Discovering devices on network...");
-
-            let mut devices: HashMap<String, Device> = config.devices.clone();
-            let mut changed: bool = false;
-
-            loop {
-                tokio::select! {
-                    _ = &mut timeout => break,
-                    Some(payload) = rx.recv() => {
-                        if let protocol::Payload::Becon(b) = payload {
-                            //println!("Found device: {:?}", b);
-                            let ip = b.ip.to_string();
-
-                            match devices.get_mut(&b.device_id) {
-
-                                Some(device) => {
-                                    if device.ip != ip {
-                                        device.ip = ip;
-                                        changed = true;
-                                    }
-                                }
-
-                                None => {
-                                    devices.insert(
-                                        b.device_id.clone(),
-                                        Device {
-                                            alias: Some(b.device_id.clone()),
-                                            id: b.device_id.clone(),
-                                            ip,
-                                            groups: Vec::new(),
-                                        }
-                                    );
-
-                                    changed = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if args.save && changed {
-                config.devices = devices;
+            if args.save && device_results.changed {
+                config.devices = device_results.devices;
                 save::save(&config, &cli.config)?;
                 println!("Config updated !")
             }
         }
+        // TODO: Implement set, rename alias feature
         Command::Alias(args) => println!("{:#?}", args),
+
+        // TODO: Implement create, add, remove, rename, delete group feautre 
         Command::Group(args) => println!("{:#?}", args),
+
         Command::Send(args) => {
-            let mut rx = atomber_udp_listener(config.network.becon_port).await?;
 
-            // TODO: send command to smart fans
-            // send_command(..).await ?
+            let command_options = CommandOptions{
+                led: args.led.map(|state| matches!(state, PowerState::On)),
+                power: args.power.map(|state| matches!(state, PowerState::On)),
+                sleep: args.sleep.map(|state| matches!(state, PowerState::On)),
+                speed: args.speed,
+                timer: args.timer,
+            };
 
-            println!("{:#?}", args);
+            let mut rx = atomber_udp_listener(config.network.becon_port.clone()).await?;
+            
+            // TODO: replace _ with actual variable to be used with send command.
+            let device_results = discover_devices(
+                &mut rx, 
+                &config.devices, 
+                Duration::from_secs(1)
+            ).await?;
+
+            let target = if let Some(alias) = args.alias.as_deref()  {
+                Target::Alias(alias)
+            } else {
+                Target::Group(args.group.as_deref().unwrap())
+            };
+
+            let device_list = resolve_target(target, &device_results.devices, &config.groups)?;
+
+            for device in device_list {
+                device::command::send(&device.ip, &config.network.command_port, &command_options).await?;
+            }
 
             let timeout = sleep(Duration::from_secs(3));
             tokio::pin!(timeout);
