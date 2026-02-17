@@ -1,7 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 
-use tokio::net::UdpSocket;
 use anyhow::Result;
+use tokio::net::UdpSocket;
 
 pub struct UdpClient {
     socket: UdpSocket,
@@ -14,7 +14,7 @@ impl UdpClient {
     }
 
     pub async fn send(&self, ip: &IpAddr, port: &u16, payload: &[u8]) -> Result<()> {
-        let addr: SocketAddr = format!("{}:{port}",ip.to_string()).parse()?;
+        let addr: SocketAddr = format!("{}:{port}", ip.to_string()).parse()?;
         self.socket.send_to(payload, addr).await?;
         Ok(())
     }

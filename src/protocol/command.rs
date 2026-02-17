@@ -1,6 +1,5 @@
-use serde_json::{Map, Value};
 use anyhow::{Ok, Result, bail};
-
+use serde_json::{Map, Value};
 
 #[derive(Debug, Default)]
 pub struct CommandBuilder {
@@ -8,10 +7,8 @@ pub struct CommandBuilder {
 }
 
 impl CommandBuilder {
-    pub fn new() ->Self {
-        Self {
-            map: Map::new(),
-        }
+    pub fn new() -> Self {
+        Self { map: Map::new() }
     }
 
     pub fn power(mut self, on: bool) -> Self {
@@ -58,6 +55,4 @@ impl CommandBuilder {
 
         Ok(serde_json::to_vec(&json)?)
     }
-
 }
-

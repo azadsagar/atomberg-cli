@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 
-use anyhow::Result;
 use crate::{network::udp_client::UdpClient, protocol::command::CommandBuilder};
+use anyhow::Result;
 
 pub struct CommandOptions {
     pub power: Option<bool>,
@@ -11,11 +11,7 @@ pub struct CommandOptions {
     pub led: Option<bool>,
 }
 
-pub async fn send(
-    ip: &IpAddr,
-    port: &u16,
-    opts: &CommandOptions,
-) -> Result<()> {
+pub async fn send(ip: &IpAddr, port: &u16, opts: &CommandOptions) -> Result<()> {
     let mut builder = CommandBuilder::new();
 
     if let Some(p) = opts.power {
@@ -23,7 +19,7 @@ pub async fn send(
     }
 
     if let Some(s) = opts.speed {
-        builder = builder. speed(s)?;
+        builder = builder.speed(s)?;
     }
 
     if let Some(enabled) = opts.sleep {
@@ -44,5 +40,4 @@ pub async fn send(
     client.send(ip, port, &payload).await?;
 
     Ok(())
-
 }

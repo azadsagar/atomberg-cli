@@ -5,10 +5,10 @@ use crate::cli::handlers::run;
 
 mod cli;
 mod config;
+mod device;
 mod network;
 mod protocol;
 mod utils;
-mod device;
 
 #[tokio::main]
 async fn main() {

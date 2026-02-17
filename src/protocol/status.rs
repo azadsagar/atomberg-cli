@@ -1,4 +1,3 @@
-
 use serde::Deserialize;
 
 use crate::device::DeviceState;
@@ -23,19 +22,19 @@ pub fn parse(content: &str) -> Option<StatusPayload> {
 }
 
 pub fn decode_device_state(state: u32) -> DeviceState {
-    let power = (state & 0x10) > 0 ;
+    let power = (state & 0x10) > 0;
     let led = (state & 0x20) > 0;
-    let sleep = (state &0x80) > 0;
+    let sleep = (state & 0x80) > 0;
     let speed = (state & 0x07) as u8;
-    let timer = ((state & 0x0F0000) >>16) as u8;
-    let timer_elapsed_mins =((state & 0xFF000000)  >> 24) * 4;
-    
-    DeviceState { 
+    let timer = ((state & 0x0F0000) >> 16) as u8;
+    let timer_elapsed_mins = ((state & 0xFF000000) >> 24) * 4;
+
+    DeviceState {
         power,
         led,
         sleep,
-        speed, 
-        timer, 
-        timer_elapsed_mins 
+        speed,
+        timer,
+        timer_elapsed_mins,
     }
 }

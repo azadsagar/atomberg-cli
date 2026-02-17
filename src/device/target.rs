@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use indexmap::{IndexMap, IndexSet};
 use crate::config::model::Device;
+use indexmap::{IndexMap, IndexSet};
+use std::collections::HashMap;
 
 use anyhow::{Result, anyhow};
 
@@ -20,15 +20,11 @@ pub fn resolve_target(
     }
 }
 
-
-fn resolve_alias(
-    alias: &str,
-    devices: &HashMap<String, Device>,
-) -> anyhow::Result<Vec<Device>> {
+fn resolve_alias(alias: &str, devices: &HashMap<String, Device>) -> anyhow::Result<Vec<Device>> {
     let device = devices
-    .values()
-    .find(|d| d.alias.as_deref() == Some(alias))
-    .ok_or_else(|| anyhow!("Device ID '{}' not found", alias))?;
+        .values()
+        .find(|d| d.alias.as_deref() == Some(alias))
+        .ok_or_else(|| anyhow!("Device ID '{}' not found", alias))?;
 
     Ok(vec![device.clone()])
 }
@@ -36,20 +32,19 @@ fn resolve_alias(
 fn resolve_group(
     group_name: &str,
     devices: &HashMap<String, Device>,
-    groups: &IndexMap<String, IndexSet<String>>
+    groups: &IndexMap<String, IndexSet<String>>,
 ) -> Result<Vec<Device>> {
-    
-    let entries = groups.get(group_name)
+    let entries = groups
+        .get(group_name)
         .ok_or_else(|| anyhow!("Group '{}' not found", group_name))?;
 
     if entries.is_empty() {
         return Err(anyhow!("Group '{}' is empty", group_name));
     }
 
-    let mut  resolved = Vec::with_capacity(entries.len());
+    let mut resolved = Vec::with_capacity(entries.len());
 
     for entry in entries {
-        
         if let Some(device) = devices.get(entry) {
             resolved.push(device.clone());
             continue;
@@ -65,7 +60,6 @@ fn resolve_group(
             entry,
             group_name,
         ));
-
     }
 
     Ok(resolved)

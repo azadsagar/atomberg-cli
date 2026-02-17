@@ -1,14 +1,13 @@
 use crate::{config::model::Device, device::DeviceResults, protocol::Payload};
-use tokio::sync::mpsc::Receiver;
 use std::{collections::HashMap, time::Duration};
-use tokio::{time::sleep};
+use tokio::sync::mpsc::Receiver;
+use tokio::time::sleep;
 
 pub async fn discover_devices(
     rx: &mut Receiver<Payload>,
     base_devices: &HashMap<String, Device>,
     duration: Duration,
 ) -> anyhow::Result<DeviceResults> {
-
     let timeout = sleep(duration);
 
     tokio::pin!(timeout);
