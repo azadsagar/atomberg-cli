@@ -11,8 +11,9 @@ mod protocol;
 mod utils;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let _ = run(cli).await;
+    run(cli).await?;
+    Ok(())
 }
