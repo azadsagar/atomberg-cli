@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use crate::cli::args::{Cli, Command, PowerState};
 use crate::config::load::load;
+use crate::config::model::Device;
 use crate::config::save;
 use crate::device::command::CommandOptions;
 use crate::device::discover::discover_devices;
@@ -48,7 +51,6 @@ pub async fn run(cli: Cli) -> Result<()> {
 
             let mut rx = atomber_udp_listener(config.network.becon_port.clone()).await?;
             
-            // TODO: replace _ with actual variable to be used with send command.
             let device_results = discover_devices(
                 &mut rx, 
                 &config.devices, 
@@ -63,8 +65,11 @@ pub async fn run(cli: Cli) -> Result<()> {
 
             let device_list = resolve_target(target, &device_results.devices, &config.groups)?;
 
+            let mut dev_status_validation: HashMap<String, Device> = HashMap::new();
+
             for device in device_list {
                 device::command::send(&device.ip, &config.network.command_port, &command_options).await?;
+                dev_status_validation.insert(device.id.clone(), device);
             }
 
             let timeout = sleep(Duration::from_secs(3));
@@ -77,8 +82,54 @@ pub async fn run(cli: Cli) -> Result<()> {
                         break;
                     }
                     Some(payload) = rx.recv() => {
-                        if let protocol::Payload::Status(s) = payload {
-                            println!("Status Received: {:?}",s);
+                        
+                        if let protocol::Payload::Status(state) = payload {
+                            if dev_status_validation.contains_key(&state.device_id.to_uppercase()) {
+
+                                if state.message_id != "internet_query" && state.state_string.contains(',') {
+                                    let first_field = state.state_string
+                                        .split(',')
+                                        .next()
+                                        .ok_or_else(|| anyhow::anyhow!("Invalid State String"))?;
+
+                                    let v: u32 = first_field.parse()?;
+
+                                    let device_state = protocol::status::decode_device_state(v);
+
+                                    let mut is_expected_state = true;
+
+                                    if let Some(led_state) = args.led {
+                                        let expected = matches!(led_state, PowerState::On);
+                                        is_expected_state = is_expected_state && device_state.led == expected;
+                                    }
+
+                                    if let Some(power_state) = args.power {
+                                        let expected = matches!(power_state, PowerState::On);
+                                        is_expected_state = is_expected_state && device_state.power == expected;
+                                    }
+
+                                    if let Some(sleep_state) = args.sleep {
+                                        let expected = matches!(sleep_state, PowerState::On);
+                                        is_expected_state = is_expected_state && device_state.sleep == expected;
+                                    }
+
+                                    if let Some(speed) = args.speed {
+                                        is_expected_state = is_expected_state && device_state.speed == speed;
+                                    }
+
+                                    if let Some(timer) = args.timer {
+                                        is_expected_state = is_expected_state && device_state.timer == timer;
+                                        println!("Timer elapsed mins is {}", &device_state.timer_elapsed_mins);
+                                    }
+
+                                    if is_expected_state {
+                                        dev_status_validation.remove(&state.device_id.to_uppercase());
+                                    }
+                                }   
+                            }
+                        }
+
+                        if dev_status_validation.is_empty(){
                             break;
                         }
                     }

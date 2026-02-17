@@ -36,7 +36,7 @@ pub enum Command {
     Group(GroupArgs),
 }
 
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug, Copy)]
 pub enum PowerState {
     On,
     Off,
@@ -70,7 +70,6 @@ pub struct DiscoverArgs {
     group(
         ArgGroup::new("action")
         .required(true)
-        .multiple(true)
         .args(["speed","led","power","timer","sleep"])
     )
 )]
