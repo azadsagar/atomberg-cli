@@ -51,7 +51,7 @@ impl CommandBuilder {
 
         let json = Value::Object(self.map);
 
-        println!("{json}");
+        //println!("{json}");
 
         Ok(serde_json::to_vec(&json)?)
     }
