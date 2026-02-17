@@ -110,22 +110,94 @@ pub struct GroupArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum AliasCommand {
-    Set { device_id: String, alias: String },
+    Set {
+        #[arg(long, help = "Device ID")]
+        device_id: String,
+        #[arg(long, help = "Alias to set")]
+        alias: String,
+    },
 
-    Remove { alias: String },
+    Rename {
+        #[arg(long, help = "Current alias")]
+        old: String,
+        #[arg(long, help = "New alias")]
+        new: String,
+    },
+
+    Remove {
+        #[arg(long, help = "Alias to remove")]
+        alias: String,
+    },
 
     List,
+
+    Show(AliasShowArgs),
 }
 
 #[derive(Subcommand, Debug)]
 pub enum GroupCommand {
-    Create { name: String, devices: Vec<String> },
+    Create {
+        #[arg(long, help = "Group name")]
+        name: String,
+    },
 
-    Delete { name: String },
+    Rename {
+        #[arg(long, help = "Current group name")]
+        old: String,
+        #[arg(long, help = "New group name")]
+        new: String,
+    },
 
-    Add { name: String, alias: String },
+    Delete {
+        #[arg(long, help = "Group name")]
+        name: String,
+    },
 
-    Remove { name: String, alias: String },
+    Add(GroupMembershipArgs),
+
+    Remove(GroupMembershipArgs),
 
     List,
+
+    Show {
+        #[arg(long, help = "Group name")]
+        name: String,
+    },
+}
+
+#[derive(Args, Debug)]
+#[command(
+    group(
+        ArgGroup::new("device_selector")
+            .required(true)
+            .multiple(false)
+            .args(["device_id", "alias"])
+    )
+)]
+pub struct AliasShowArgs {
+    #[arg(long, help = "Device ID")]
+    pub device_id: Option<String>,
+
+    #[arg(long, help = "Alias")]
+    pub alias: Option<String>,
+}
+
+#[derive(Args, Debug)]
+#[command(
+    group(
+        ArgGroup::new("device_selector")
+            .required(true)
+            .multiple(false)
+            .args(["device_id", "alias"])
+    )
+)]
+pub struct GroupMembershipArgs {
+    #[arg(long, help = "Group name")]
+    pub name: String,
+
+    #[arg(long, help = "Device ID")]
+    pub device_id: Option<String>,
+
+    #[arg(long, help = "Alias")]
+    pub alias: Option<String>,
 }
