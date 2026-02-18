@@ -12,7 +12,10 @@ pub fn set_alias(config: &mut Config, device_id: &str, alias: &str) -> Result<bo
 
     let existing_owner = find_device_id_by_alias(config, &alias);
     if existing_owner.as_deref() != Some(device_id.as_str()) && existing_owner.is_some() {
-        return Err(anyhow!("Alias '{}' is already used by another device", alias));
+        return Err(anyhow!(
+            "Alias '{}' is already used by another device",
+            alias
+        ));
     }
 
     let device = config
@@ -250,8 +253,7 @@ fn normalize_group_name(name: &str) -> Result<String> {
 }
 
 fn find_device_id_by_alias(config: &Config, alias: &str) -> Option<String> {
-    config
-        .devices
-        .iter()
-        .find_map(|(device_id, device)| (device.alias.as_deref() == Some(alias)).then(|| device_id.clone()))
+    config.devices.iter().find_map(|(device_id, device)| {
+        (device.alias.as_deref() == Some(alias)).then(|| device_id.clone())
+    })
 }
