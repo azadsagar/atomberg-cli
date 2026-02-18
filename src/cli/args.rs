@@ -110,6 +110,7 @@ pub struct GroupArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum AliasCommand {
+    #[command(about = "Set alias for a device ID")]
     Set {
         #[arg(long, help = "Device ID")]
         device_id: String,
@@ -117,6 +118,7 @@ pub enum AliasCommand {
         alias: String,
     },
 
+    #[command(about = "Rename an existing alias")]
     Rename {
         #[arg(long, help = "Current alias")]
         old: String,
@@ -124,23 +126,28 @@ pub enum AliasCommand {
         new: String,
     },
 
+    #[command(about = "Remove an alias and revert to device ID as alias")]
     Remove {
         #[arg(long, help = "Alias to remove")]
         alias: String,
     },
 
+    #[command(about = "List all device IDs and aliases")]
     List,
 
+    #[command(about = "Show alias mapping for one device selector")]
     Show(AliasShowArgs),
 }
 
 #[derive(Subcommand, Debug)]
 pub enum GroupCommand {
+    #[command(about = "Create a new group")]
     Create {
         #[arg(long, help = "Group name")]
         name: String,
     },
 
+    #[command(about = "Rename a group")]
     Rename {
         #[arg(long, help = "Current group name")]
         old: String,
@@ -148,17 +155,22 @@ pub enum GroupCommand {
         new: String,
     },
 
+    #[command(about = "Delete a group")]
     Delete {
         #[arg(long, help = "Group name")]
         name: String,
     },
 
+    #[command(about = "Add a device to a group")]
     Add(GroupMembershipArgs),
 
+    #[command(about = "Remove a device from a group")]
     Remove(GroupMembershipArgs),
 
+    #[command(about = "List groups")]
     List,
 
+    #[command(about = "Show members of a group")]
     Show {
         #[arg(long, help = "Group name")]
         name: String,
