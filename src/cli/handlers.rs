@@ -1,11 +1,12 @@
 use crate::cli::args::{
     AliasArgs, AliasCommand, AliasShowArgs, Cli, Command, GroupArgs, GroupCommand,
-    GroupMembershipArgs, PowerState, SendArgs,
+    GroupMembershipArgs, LightModeState, PowerState, SendArgs,
 };
 use crate::config::load::load;
 use crate::config::model::Config;
 use crate::config::ops::{self, DeviceSelector};
 use crate::config::save;
+use crate::device::LightMode;
 use crate::device::command::CommandOptions;
 use crate::device::discover::discover_devices;
 use crate::device::send_workflow;
@@ -91,6 +92,8 @@ fn command_options_from_args(args: &SendArgs) -> CommandOptions {
         sleep: args.sleep.map(|state| matches!(state, PowerState::On)),
         speed: args.speed,
         timer: args.timer,
+        brightness: args.set_brightness,
+        light_mode: parse_light_mode(args),
     }
 }
 
@@ -101,7 +104,17 @@ fn requested_state_from_args(args: &SendArgs) -> RequestedState {
         sleep: args.sleep.map(|state| matches!(state, PowerState::On)),
         speed: args.speed,
         timer: args.timer,
+        brightness: args.set_brightness,
+        light_mode: parse_light_mode(args),
     }
+}
+
+fn parse_light_mode(args: &SendArgs) -> Option<LightMode> {
+    args.color.map(|color| match color {
+        LightModeState::Warm => LightMode::Warm,
+        LightModeState::Cool => LightMode::Cool,
+        LightModeState::Daylight => LightMode::Daylight,
+    })
 }
 
 fn handle_alias(args: AliasArgs, config: &mut Config) -> Result<bool> {
@@ -109,7 +122,11 @@ fn handle_alias(args: AliasArgs, config: &mut Config) -> Result<bool> {
         AliasCommand::Set { device_id, alias } => {
             let changed = ops::set_alias(config, &device_id, &alias)?;
             if changed {
-                println!("Alias '{}' set for device '{}'", alias, device_id.to_uppercase());
+                println!(
+                    "Alias '{}' set for device '{}'",
+                    alias,
+                    device_id.to_uppercase()
+                );
             } else {
                 println!("Alias unchanged");
             }
@@ -207,7 +224,12 @@ fn handle_group(args: GroupArgs, config: &mut Config) -> Result<bool> {
         }
         GroupCommand::List => {
             for (name, members) in &config.groups {
-                println!("{} ({} member{})", name, members.len(), if members.len() == 1 { "" } else { "s" });
+                println!(
+                    "{} ({} member{})",
+                    name,
+                    members.len(),
+                    if members.len() == 1 { "" } else { "s" }
+                );
             }
             Ok(false)
         }
@@ -225,7 +247,10 @@ fn handle_group(args: GroupArgs, config: &mut Config) -> Result<bool> {
     }
 }
 
-fn resolve_alias_show(config: &Config, args: AliasShowArgs) -> Result<crate::config::model::Device> {
+fn resolve_alias_show(
+    config: &Config,
+    args: AliasShowArgs,
+) -> Result<crate::config::model::Device> {
     let selector = if let Some(device_id) = args.device_id.as_deref() {
         DeviceSelector::DeviceId(device_id)
     } else {

@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 
+use crate::device::LightMode;
 use crate::{network::udp_client::UdpClient, protocol::command::CommandBuilder};
 use anyhow::Result;
 
@@ -9,6 +10,8 @@ pub struct CommandOptions {
     pub sleep: Option<bool>,
     pub timer: Option<u8>,
     pub led: Option<bool>,
+    pub brightness: Option<u8>,
+    pub light_mode: Option<LightMode>,
 }
 
 pub async fn send(ip: &IpAddr, port: &u16, opts: &CommandOptions) -> Result<()> {
@@ -32,6 +35,14 @@ pub async fn send(ip: &IpAddr, port: &u16, opts: &CommandOptions) -> Result<()> 
 
     if let Some(l) = opts.led {
         builder = builder.led(l);
+    }
+
+    if let Some(b) = opts.brightness {
+        builder = builder.brightness(b)?;
+    }
+
+    if let Some(light_mode) = opts.light_mode {
+        builder = builder.light_mode(light_mode);
     }
 
     let payload = builder.build()?;

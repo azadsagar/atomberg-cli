@@ -21,3 +21,13 @@ pub fn timer_parser(value: &str) -> Result<u8> {
 
     Ok(parsed)
 }
+
+pub fn led_brightness(s: &str) -> Result<u8, &'static str> {
+    let v: u8 = s.parse().map_err(|_| "Brightness must be a number")?;
+
+    if (10..=100).contains(&v) {
+        Ok(v)
+    } else {
+        Err("Brightness must be between 10 and 100")
+    }
+}

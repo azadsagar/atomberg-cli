@@ -1,6 +1,8 @@
 use anyhow::{Ok, Result, bail};
 use serde_json::{Map, Value};
 
+use crate::device::LightMode;
+
 #[derive(Debug, Default)]
 pub struct CommandBuilder {
     map: Map<String, Value>,
@@ -41,6 +43,28 @@ impl CommandBuilder {
 
     pub fn led(mut self, on: bool) -> Self {
         self.map.insert("led".into(), Value::Bool(on));
+        self
+    }
+
+    pub fn brightness(mut self, value: u8) -> Result<Self> {
+        if !(10..=100).contains(&value) {
+            bail!("Brightness must be between 10 and 100")
+        }
+
+        self.map
+            .insert("brightness".into(), Value::Number(value.into()));
+        Ok(self)
+    }
+
+    pub fn light_mode(mut self, mode: LightMode) -> Self {
+        let value = match mode {
+            LightMode::Warm => "warm",
+            LightMode::Cool => "cool",
+            LightMode::Daylight => "daylight",
+        };
+
+        self.map
+            .insert("light_mode".into(), Value::String(value.to_string()));
         self
     }
 

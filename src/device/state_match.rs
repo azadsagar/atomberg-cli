@@ -1,4 +1,4 @@
-use crate::device::DeviceState;
+use crate::device::{DeviceState, LightMode};
 
 #[derive(Debug, Clone, Default)]
 pub struct RequestedState {
@@ -7,6 +7,8 @@ pub struct RequestedState {
     pub sleep: Option<bool>,
     pub timer: Option<u8>,
     pub led: Option<bool>,
+    pub brightness: Option<u8>,
+    pub light_mode: Option<LightMode>,
 }
 
 pub fn matches_expected(actual: &DeviceState, expected: &RequestedState) -> bool {
@@ -36,6 +38,18 @@ pub fn matches_expected(actual: &DeviceState, expected: &RequestedState) -> bool
 
     if let Some(led) = expected.led
         && actual.led != led
+    {
+        return false;
+    }
+
+    if let Some(brightness) = expected.brightness
+        && actual.brightness != brightness
+    {
+        return false;
+    }
+
+    if let Some(light_mode) = expected.light_mode
+        && actual.light_mode != Some(light_mode)
     {
         return false;
     }

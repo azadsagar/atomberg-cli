@@ -1,4 +1,4 @@
-use crate::utils::fan_speed::{speed_parser, timer_parser};
+use crate::utils::fan_speed::{led_brightness, speed_parser, timer_parser};
 use clap::{ArgGroup, Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
@@ -42,6 +42,13 @@ pub enum PowerState {
     Off,
 }
 
+#[derive(ValueEnum, Clone, Debug, Copy)]
+pub enum LightModeState {
+    Warm,
+    Cool,
+    Daylight,
+}
+
 #[derive(Args, Debug)]
 pub struct DiscoverArgs {
     #[arg(
@@ -70,7 +77,7 @@ pub struct DiscoverArgs {
     group(
         ArgGroup::new("action")
         .required(true)
-        .args(["speed","led","power","timer","sleep"])
+        .args(["speed","led","set_brightness","color","power","timer","sleep"])
     )
 )]
 pub struct SendArgs {
@@ -83,8 +90,20 @@ pub struct SendArgs {
     #[arg(long, value_parser = speed_parser, help = "Speed of the fan between 1 and 6")]
     pub speed: Option<u8>,
 
-    #[arg(long, help = "Should the LED be on or off")]
+    #[arg(
+        long,
+        help = "Should the LED be on or off, For Aris starlight fan, this turns on Light"
+    )]
     pub led: Option<PowerState>,
+
+    #[arg(long, value_parser = led_brightness, help = "Set the brightness value for light between 10 and 100 (percentage). Applicable for Aris Starlight Fan")]
+    pub set_brightness: Option<u8>,
+
+    #[arg(
+        long,
+        help = "Set light color mode [warm, cool, daylight]. Applicable for Aris Starlight Fan"
+    )]
+    pub color: Option<LightModeState>,
 
     #[arg(long, help = "Should the power be on or off")]
     pub power: Option<PowerState>,

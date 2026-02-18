@@ -8,6 +8,13 @@ use std::collections::HashMap;
 
 use crate::config::model::Device;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LightMode {
+    Warm,
+    Cool,
+    Daylight,
+}
+
 pub struct DeviceResults {
     pub devices: HashMap<String, Device>,
     pub changed: bool,
@@ -21,4 +28,6 @@ pub struct DeviceState {
     pub speed: u8,
     pub timer: u8,
     pub timer_elapsed_mins: u32,
+    pub brightness: u8,
+    pub light_mode: Option<LightMode>,
 }
