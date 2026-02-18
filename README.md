@@ -1,6 +1,7 @@
 ## atomberg-cli
 
 Control Atomberg smart fans over the local network from the terminal.
+Written in rust with pure `human touch`.
 
 ## Why This Exists
 
