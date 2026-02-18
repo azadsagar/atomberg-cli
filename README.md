@@ -147,35 +147,6 @@ atomberg group list
 atomberg group show --name <GROUP>
 ```
 
-## Protocol Mapping (Implemented)
-
-### Outgoing command payloads
-
-- Brightness:
-
-```json
-{"brightness": 10}
-```
-
-- Color mode:
-
-```json
-{"light_mode": "warm"}
-```
-
-### Status decode for light mode
-
-From `state` (first numeric field of status string):
-
-- `cool = (state & 0x08) > 0`
-- `warm = (state & 0x8000) > 0`
-
-Mapping:
-
-- `cool=true`, `warm=false` => `cool`
-- `cool=false`, `warm=true` => `warm`
-- `cool=true`, `warm=true` => `daylight`
-
 ## Contributing
 
 Forks and pull requests are welcome.
